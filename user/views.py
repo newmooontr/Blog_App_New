@@ -4,17 +4,24 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.authtoken.models import Token
 
 
-# Create your views here.
-
-
 class RegisterView(CreateAPIView):
+    print("here")
     queryset = User.objects.all()
     serializer_class = RegisterSerializers
-    
-    
-    def create(self, request, *args, **kwargs): # metod override etmek
+
+    def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         token = Token.objects.create(user_id=response.data['id'])
-        response.data['token'] = token.key #gelen dataya token ekleyerek register olan user ı direkt ana sayfaya yönlendirmek.
+        response.data['token'] = token.key
         # print(response.data)
         return response
+
+# ----------- User Logout Function ------------------
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+# Kullanıcı Çıkış (Token Sil)
+@api_view(['POST'])
+def logout(request):
+    request.user.auth_token.delete()
+    return Response({"message": 'User Logout: Token Deleted'})
