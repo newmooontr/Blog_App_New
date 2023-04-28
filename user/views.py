@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 
 
 class RegisterView(CreateAPIView):
-    print("here")
+    print("here22")
     queryset = User.objects.all()
     serializer_class = RegisterSerializers
 

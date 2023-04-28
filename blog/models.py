@@ -1,10 +1,11 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-
+from django_extensions.db.fields import AutoSlugField
 # Create your models here.
 
-
+def rewrite_slug(content):
+    return content.replace(' ', '_').lower()
 
 class Post(models.Model):
     title = models.CharField(max_length=100)
@@ -14,7 +15,7 @@ class Post(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     is_published = models.BooleanField(default=False)
-    slug = models.SlugField(blank=True, unique=True) 
+    slug = AutoSlugField(populate_from='title', slugify_function=rewrite_slug)
 
 
     def __str__(self):
