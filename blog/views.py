@@ -115,6 +115,15 @@ class LikeMVS(ModelViewSet):
         return Response(serializer.data)
         
 
-    
+    def get_queryset(self):  
+        post_id = self.kwargs.get('post_pk')
+        if post_id == None: 
+            return self.queryset 
+        else:
+            try:
+                post = Post.objects.get(id=post_id) 
+            except Post.DoesNotExist: 
+              raise NotFound("A post with this id does not exist")
+        return self.queryset.filter(post = post) 
     
     
