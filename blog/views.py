@@ -93,7 +93,6 @@ class LikeMVS(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     
-    
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -107,7 +106,7 @@ class LikeMVS(ModelViewSet):
                 serializer.validated_data['is_liked'] = True  
                 
         self.perform_update(serializer)
-
+    
         if getattr(instance, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
             # forcibly invalidate the prefetch cache on the instance.
