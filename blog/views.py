@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.viewsets import ModelViewSet
-from .serializers import PostSerializer,CommentSerializer
-from .models import Post, PostView,Comment
+from .serializers import PostSerializer,CommentSerializer,LikeSerializer
+from .models import Post, PostView,Comment,Like
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, NotFound
@@ -17,7 +17,7 @@ class PostMVS(ModelViewSet):
         instance = self.get_object()
         postview = PostView.objects.filter(user= request.user, post= instance) 
         if not postview.exists(): 
-            PostView.objects.create(post=instance, user=request.user) 
+            PostView.objects.create(post=instance, user=request.user)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
@@ -45,7 +45,7 @@ class CommentMVS(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         current_user = self.request.user
-        post_id = self.request.body.post_id # self.kwargs.get('post_pk')
+        post_id = self.kwargs.get('post_pk')
         print("post is=>", post_id)
         comment = Comment.objects.filter(post_id = post_id, commentor_id= current_user.id)
         if comment.exists(): # eğer yorum varsa 
@@ -74,4 +74,27 @@ class CommentMVS(ModelViewSet):
     
    
 class LikeMVS(ModelViewSet):
-    pass
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        current_user = self.request.user
+        post_id = self.kwargs.get('post_pk')
+        like = Like.objects.filter(post_id = post_id, liker_id= current_user.id)#yakaladığımız post_id postun id sine eşitse; commentorun id si current_user id sine eşitse.
+        if like.exists(): # eğer like yapmışsa
+            raise Response (serializer.data)
+        else:     #yapmamışsa                                  
+            post_id = self.kwargs.get('post_pk') #pk çek 
+            serializer.validated_data['liker_id'] = current_user.id # like yapanın id si ile current_user id si ni karşılaştır.
+            serializer.validated_data['post_id'] = post_id # 
+            serializer.validated_data['is_liked'] = True # ilk defa like yapan birinin like ını true olarak kabul etsin 
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        
+
+    
+    
+    
