@@ -22,8 +22,6 @@ class PostMVS(ModelViewSet):
         return Response(serializer.data)
     
     
-    
-    
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -82,17 +80,40 @@ class LikeMVS(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         current_user = self.request.user
         post_id = self.kwargs.get('post_pk')
-        like = Like.objects.filter(post_id = post_id, liker_id= current_user.id)#yakaladığımız post_id postun id sine eşitse; commentorun id si current_user id sine eşitse.
-        if like.exists(): # eğer like yapmışsa
+        like = Like.objects.filter(post_id = post_id, liker_id= current_user.id)
+        if like.exists(): 
             raise Response (serializer.data)
-        else:     #yapmamışsa                                  
-            post_id = self.kwargs.get('post_pk') #pk çek 
-            serializer.validated_data['liker_id'] = current_user.id # like yapanın id si ile current_user id si ni karşılaştır.
-            serializer.validated_data['post_id'] = post_id # 
-            serializer.validated_data['is_liked'] = True # ilk defa like yapan birinin like ını true olarak kabul etsin 
+        else:                                      
+            post_id = self.kwargs.get('post_pk') 
+            serializer.validated_data['liker_id'] = current_user.id 
+            serializer.validated_data['post_id'] = post_id 
+            serializer.validated_data['is_liked'] = True 
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        
+        if self.request.user.id == instance.liker_id: 
+            if instance.is_liked == True: 
+                serializer.validated_data['is_liked'] = False 
+            else:
+                serializer.validated_data['is_liked'] = True  
+                
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
         
 
     
